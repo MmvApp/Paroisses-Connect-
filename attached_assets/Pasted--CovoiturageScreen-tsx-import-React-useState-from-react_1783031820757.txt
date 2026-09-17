@@ -1,0 +1,280 @@
+// CovoiturageScreen.tsx
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  TextInput,
+  Alert,
+  Platform,
+  StyleSheet,
+} from "react-native";
+
+type Ride = {
+  id: string;
+  type: "offer" | "request";
+  name: string;
+  location: string;
+  event: string;
+  time: string;
+  seats: number;
+};
+
+export default function CovoiturageScreen() {
+  const [tab, setTab] = useState<"offer" | "request">("offer");
+  const [rides, setRides] = useState<Ride[]>([
+    {
+      id: "1",
+      type: "offer",
+      name: "Marie D.",
+      location: "Quartier Saint-Michel",
+      event: "Messe du dimanche 10h30",
+      time: "10h00",
+      seats: 3,
+    },
+  ]);
+
+  const [formVisible, setFormVisible] = useState(false);
+  const [location, setLocation] = useState("");
+  const [event, setEvent] = useState("");
+  const [time, setTime] = useState("");
+  const [seats, setSeats] = useState("1");
+
+  const filteredRides = rides.filter((ride) => ride.type === tab);
+
+  const addRide = () => {
+    if (!location || !event || !time) {
+      Alert.alert("Champs manquants", "Remplis le lieu, l’événement et l’heure.");
+      return;
+    }
+
+    const newRide: Ride = {
+      id: Date.now().toString(),
+      type: tab,
+      name: "Moi",
+      location,
+      event,
+      time,
+      seats: Number(seats) || 1,
+    };
+
+    setRides([newRide, ...rides]);
+    setLocation("");
+    setEvent("");
+    setTime("");
+    setSeats("1");
+    setFormVisible(false);
+  };
+
+  const reserveSeat = (id: string) => {
+    setRides((prev) =>
+      prev.map((ride) =>
+        ride.id === id && ride.seats > 0
+          ? { ...ride, seats: ride.seats - 1 }
+          : ride
+      )
+    );
+
+    Alert.alert("Réservation confirmée", "Ta place a bien été réservée.");
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Covoiturage</Text>
+
+      <View style={styles.tabs}>
+        <Pressable
+          style={[styles.tab, tab === "offer" && styles.activeTab]}
+          onPress={() => setTab("offer")}
+        >
+          <Text style={[styles.tabText, tab === "offer" && styles.activeTabText]}>
+            Offres de trajet
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.tab, tab === "request" && styles.activeTab]}
+          onPress={() => setTab("request")}
+        >
+          <Text style={[styles.tabText, tab === "request" && styles.activeTabText]}>
+            Demandes de trajet
+          </Text>
+        </Pressable>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        {filteredRides.map((ride) => (
+          <View key={ride.id} style={styles.card}>
+            <Text style={styles.name}>{ride.name}</Text>
+            <Text style={styles.text}>📍 {ride.location}</Text>
+            <Text style={styles.text}>📅 {ride.event}</Text>
+            <Text style={styles.badge}>Départ {ride.time}</Text>
+            <Text style={styles.badge}>{ride.seats} place(s)</Text>
+
+            {ride.type === "offer" && ride.seats > 0 && (
+              <Pressable style={styles.smallButton} onPress={() => reserveSeat(ride.id)}>
+                <Text style={styles.smallButtonText}>Réserver une place</Text>
+              </Pressable>
+            )}
+          </View>
+        ))}
+
+        <Pressable style={styles.mainButton} onPress={() => setFormVisible(!formVisible)}>
+          <Text style={styles.mainButtonText}>
+            {tab === "offer" ? "+ Proposer un trajet" : "+ Demander un trajet"}
+          </Text>
+        </Pressable>
+
+        {formVisible && (
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              placeholder="Lieu de départ"
+              value={location}
+              onChangeText={setLocation}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Événement / messe"
+              value={event}
+              onChangeText={setEvent}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Heure de départ"
+              value={time}
+              onChangeText={setTime}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre de places"
+              keyboardType="numeric"
+              value={seats}
+              onChangeText={setSeats}
+            />
+
+            <Pressable style={styles.mainButton} onPress={addRide}>
+              <Text style={styles.mainButtonText}>Publier</Text>
+            </Pressable>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingTop: Platform.OS === "web" ? 30 : 55,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#111",
+  },
+  tabs: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: "#E8DDC8",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  activeTab: {
+    borderBottomWidth: 3,
+    borderColor: "#D0A947",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  activeTabText: {
+    color: "#C89F35",
+    fontWeight: "600",
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+    maxWidth: 700,
+    width: "100%",
+    alignSelf: "center",
+  },
+  card: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  name: {
+    fontSize: 19,
+    fontWeight: "700",
+    marginBottom: 8,
+    color: "#111",
+  },
+  text: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 5,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF8EA",
+    borderColor: "#E8D7B4",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 8,
+    color: "#C89F35",
+    fontWeight: "600",
+  },
+  mainButton: {
+    backgroundColor: "#D0A947",
+    padding: 18,
+    borderRadius: 18,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  mainButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+  },
+  smallButton: {
+    backgroundColor: "#F5E7C8",
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 12,
+    alignItems: "center",
+  },
+  smallButtonText: {
+    fontWeight: "700",
+    color: "#111",
+  },
+  form: {
+    marginTop: 16,
+    backgroundColor: "#FFF8EA",
+    padding: 16,
+    borderRadius: 18,
+  },
+  input: {
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E8D7B4",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    fontSize: 16,
+  },
+});

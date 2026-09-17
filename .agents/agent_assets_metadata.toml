@@ -1,0 +1,106 @@
+uploads = []
+
+[[generated]]
+id = "UkhCP9VDnnhrKg52F544F"
+uri = "file://artifacts/paroisse-connect/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "BLcrXILnzrjrQBpzJKjiI"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release.aab"
+type = "unspecified"
+title = "Paroisse Connect — Android App Bundle (v1.0.0)"
+logical_id = "444ccf7a-b6a1-4b59-ac2a-71d2bc024a10"
+
+[[outputs]]
+id = "r1SvN0jxSgMbWsSZVG_nw"
+uri = "file://artifacts/paroisse-connect/downloads/upload_certificate.pem"
+type = "unspecified"
+title = "Certificat d’upload Android — Paroisse Connect"
+description = "Certificat public correspondant à la nouvelle clé d’upload paroisse-upload. À téléverser dans Google Play Console pour réinitialiser la clé d’upload de com.paroisseconnect.app."
+logical_id = "f3157a18-8a0b-49fe-aa87-8fc1d36082f9"
+content_hash = "sha256:e57f8488a5f559d806aa3ad4677783181176e7487443f23c5f334c67b1d2d73f"
+size = 1333
+mtime_ms = 1789181524824
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/f3157a18-8a0b-49fe-aa87-8fc1d36082f9/573146f6-a58e-452b-bfe5-956b69310874"
+storage_version_token = "1789181662379036"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zhK4YjRB8fFtIG0E6aEfR"
+uri = "file://artifacts/paroisse-connect/downloads/upload_certificate.pem.zip"
+type = "unspecified"
+title = "Télécharger upload_certificate.pem"
+description = "Archive contenant le fichier exact upload_certificate.pem. Sur iPhone : télécharge l’archive dans Fichiers, touche-la pour la décompresser, puis importe le fichier upload_certificate.pem dans Google Play Console."
+logical_id = "6c3f4fe7-7778-49a3-a0db-68961bf0ce81"
+content_hash = "sha256:6c35c274d3eab9732a12b59acaa40cf783995a1cb0904f3f40c3242fa4a2a276"
+size = 1180
+mtime_ms = 1789181852556
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/6c3f4fe7-7778-49a3-a0db-68961bf0ce81/0aeb63f5-0513-4594-b571-b5dc87ce55ef"
+storage_version_token = "1789181856220523"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tuER6_1ld6QUdBbPBdk9m"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release-1.0.1-build2-new-upload-key.aab"
+type = "unspecified"
+title = "Télécharger directement — Paroisse Connect Android AAB"
+description = "Fichier AAB Android signé, version 1.0.1 (versionCode 2), package com.paroisseconnect.app. Télécharge-le depuis cette pièce jointe Replit et enregistre-le dans Fichiers sur l’iPhone."
+logical_id = "0aaf00b9-d22d-409c-95ea-2abfc8885ade"
+
+[[outputs]]
+id = "bO8oz69BI_bBa2Wje5T-S"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release-1.0.1-build2-new-upload-key.aab.zip"
+type = "unspecified"
+title = "Télécharger le ZIP Android — Paroisse Connect AAB"
+description = "Archive ZIP compatible avec Safari sur iPhone. Elle contient le fichier AAB signé paroisse-connect-release-1.0.1-build2-new-upload-key.aab. Après téléchargement, touche le ZIP dans Fichiers pour le décompresser."
+logical_id = "6e743d24-11f0-40fc-9f12-0a0b7ea51e2b"
+content_hash = "sha256:7eb45585279a2fab1881ca3c3d1097ff1f781f78e746825749b9716ac7d98941"
+size = 33421788
+mtime_ms = 1789241193429
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/6e743d24-11f0-40fc-9f12-0a0b7ea51e2b/086c97f6-6716-41cb-b6bd-fa2a4cb66e0b"
+storage_version_token = "1789241198247153"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wncVC5eYndrwsROxW9WqG"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release-1.0.2-build3-existing-upload-key.aab"
+type = "unspecified"
+title = "Paroisse Connect Android release AAB"
+description = "Release AAB 1.0.2 (versionCode 3), package com.paroisseconnect.app, signed with the existing paroisse-upload keystore."
+logical_id = "3698402d-4680-409d-bde6-c4b00cfb25ac"
+content_hash = "sha256:21751b59a2e448f730bd8450699a0be87dc19dc200946d80b5480dbf89d5a8b4"
+size = 34016909
+mtime_ms = 1789514298626
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/3698402d-4680-409d-bde6-c4b00cfb25ac/3cdfa1dc-340a-43f3-b375-8ca97da6f690"
+storage_version_token = "1789514311039699"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "H3lQHGfRVrHcmzv3EKo_d"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release-1.0.2-build3-multiabi.aab"
+type = "unspecified"
+title = "Paroisse Connect Android AAB — version 1.0.2 build 3"
+description = "Bundle Android signé avec le keystore de publication existant. Contrôles effectués : certificat SHA-256 attendu, signature AAB valide, et ABI arm64-v8a, armeabi-v7a, x86 et x86_64 incluses."
+logical_id = "9508ddca-715a-470f-ac9b-3d39e7eede7e"
+content_hash = "sha256:b0927c6ed6cc3470456b39971f71c43202e9b6912cc0a091406bc9cd0c6db982"
+size = 69928361
+mtime_ms = 1789524471745
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/9508ddca-715a-470f-ac9b-3d39e7eede7e/ffc08da3-4071-4892-9b2c-58170ad926ee"
+storage_version_token = "1789524501224770"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "S_RM6japE2Kl5bSVNpqoe"
+uri = "file://artifacts/paroisse-connect/downloads/paroisse-connect-release-1.0.2-build4-multiabi.aab"
+type = "unspecified"
+title = "Paroisse Connect Android AAB — version 1.0.2 build 4"
+description = "AAB signé avec le même keystore et l’alias paroisse-upload. VersionCode 4, versionName 1.0.2, package com.paroisseconnect.app. Signature et ABI arm64-v8a, armeabi-v7a, x86 et x86_64 vérifiées."
+logical_id = "039a976a-942d-4953-b217-0bebde8dcafb"
+content_hash = "sha256:d8bb4d0922caaa50c736e3a526d0e1a34069b28a22a7ddacf19a6fc0f06ecce2"
+size = 69928367
+mtime_ms = 1789527669584
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:ad18ac8c-337c-4bcd-9da3-c0d338a09bcb/039a976a-942d-4953-b217-0bebde8dcafb/3a6a4a35-9713-4e9a-932b-1d89c2226d91"
+storage_version_token = "1789527693803948"
+content_type = "application/octet-stream"

@@ -1,0 +1,143 @@
+Créer un système complet de revendication des paroisses.
+
+OBJECTIF
+
+Un prêtre doit pouvoir prendre officiellement le contrôle de sa paroisse sans intervention de l'administrateur principal.
+
+--------------------------------------------------
+
+1. Bouton "Je suis le prêtre de cette paroisse"
+
+Afficher ce bouton sur la page de chaque paroisse uniquement si aucun prêtre n'est encore validé.
+
+--------------------------------------------------
+
+2. Formulaire de demande
+
+Le prêtre renseigne :
+
+• Nom et prénom
+• Email
+• Téléphone
+• Fonction (curé, vicaire, diacre...)
+• Nom de la paroisse
+• Diocèse
+• Département
+• Message de présentation
+
+Documents :
+
+• Carte d'identité
+• Lettre de mission ou document officiel de l'Église
+• Photo facultative
+
+Enregistrer toutes les données dans Firestore.
+
+Collection :
+
+parishClaims
+
+Status :
+
+pending
+approved
+rejected
+
+--------------------------------------------------
+
+3. Tableau d'administration
+
+Créer une page "Demandes de revendication".
+
+Visible uniquement pour les administrateurs.
+
+Afficher :
+
+• Nom
+• Paroisse
+• Date
+• Documents
+• Statut
+
+Boutons :
+
+Approuver
+Refuser
+Voir les documents
+
+--------------------------------------------------
+
+4. Validation
+
+Quand l'admin clique sur "Approuver" :
+
+• le compte devient rôle "prêtre"
+• parishId est enregistré dans le profil utilisateur
+• la paroisse est marquée comme revendiquée
+• la demande passe en "approved"
+
+--------------------------------------------------
+
+5. Refus
+
+Le statut devient "rejected".
+
+Le candidat peut refaire une demande plus tard.
+
+--------------------------------------------------
+
+6. Sécurité
+
+Une seule demande active par utilisateur.
+
+Une seule demande active par paroisse.
+
+Empêcher deux prêtres d'obtenir la même paroisse.
+
+Toutes les règles Firestore doivent être respectées.
+
+--------------------------------------------------
+
+7. Interface
+
+Utiliser exactement le design actuel :
+
+bleu marine
+blanc
+or
+
+Même style que le reste de Paroisse Connect.
+
+--------------------------------------------------
+
+8. Notifications
+
+Après validation :
+
+le prêtre reçoit une notification :
+
+"Votre demande a été acceptée. Vous êtes maintenant administrateur de votre paroisse."
+
+Après refus :
+
+"Votre demande n'a pas été acceptée."
+
+--------------------------------------------------
+
+9. Journal
+
+Créer une collection adminLogs.
+
+Enregistrer :
+
+date
+administrateur
+utilisateur
+paroisse
+action
+
+--------------------------------------------------
+
+Ne modifier aucune fonctionnalité existante.
+
+Créer uniquement ce nouveau système professionnel.

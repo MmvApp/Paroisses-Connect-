@@ -1,0 +1,26 @@
+Je veux améliorer le système de notifications de Paroisse Connect avec un fonctionnement similaire à Facebook, sans copier son design.
+
+Actuellement, j’ai par exemple un badge 🔔 4 sur Actu, mais je ne peux pas consulter clairement à quoi correspondent ces notifications.
+
+Je veux que lorsqu’on appuie sur la cloche / le badge, une page « Notifications » s’ouvre avec toutes les notifications de l’utilisateur, de la plus récente à la plus ancienne.
+
+Chaque notification doit expliquer clairement l’action :
+« X a commenté votre actualité », « X a aimé votre publication », « X a réagi à votre prière », « X souhaite participer à votre covoiturage », « votre demande a été acceptée », etc.
+
+Très important : chaque notification doit être cliquable.
+Si je touche une notification concernant une actualité, l’application doit ouvrir directement cette actualité précise.
+Si elle concerne un commentaire, ouvrir la publication concernée et si possible afficher directement les commentaires.
+Pour une prière → ouvrir la prière concernée.
+Pour un covoiturage → ouvrir le trajet concerné.
+Pour une demande d’entraide → ouvrir la demande concernée.
+Pour un message → ouvrir directement la conversation concernée.
+
+Les notifications non lues doivent être visuellement distinguées. Quand elles sont consultées, elles passent en lues et le compteur du badge diminue automatiquement. Ajoute également « Tout marquer comme lu ».
+
+Vérifie d’abord pourquoi mon compte affiche actuellement 4 notifications et assure-toi que le compteur correspond réellement aux notifications non lues.
+
+Réutilise le système et les données déjà existants autant que possible. Ne casse pas les fonctions qui marchent actuellement et ne change pas le design général de l’application.
+
+Prépare la fonctionnalité pour Web, Android et iPhone, mais ne distribue aucune nouvelle version Android ou iOS maintenant. Je ferai une seule mise à jour Android plus tard avec toutes mes modifications, et iPhone ultérieurement.
+
+Continue en mode Free. Fais tout ce que tu peux toi-même et ne me demande une intervention que si elle est réellement indispensable.

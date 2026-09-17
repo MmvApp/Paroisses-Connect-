@@ -1,0 +1,41 @@
+Je veux générer un nouveau fichier AAB Android de Paroisse Connect, prêt à être envoyé sur Google Play Console comme mise à jour de l’application existante.
+
+Merci de vérifier toute la configuration Android avant de lancer le build.
+
+IMPORTANT — CLÉ DE SIGNATURE :
+
+* Ne réinitialise surtout pas la clé Android.
+* Ne crée pas de nouvelle clé / nouveau keystore.
+* Ne remplace pas la clé existante.
+* Ne modifie pas le certificat de signature.
+* Ne modifie pas l’alias ou les paramètres du keystore.
+* Je veux conserver et utiliser exactement la même clé de signature que celle utilisée pour la version déjà envoyée sur Google Play.
+* Tu peux vérifier la clé et sa configuration, mais ne fais aucune modification, suppression ou régénération de la clé sans mon autorisation explicite.
+* Si tu détectes un problème avec la clé, arrête-toi et explique-moi le problème avant de toucher à quoi que ce soit.
+
+POUR LE NOUVEL AAB :
+
+* Conserve exactement le même package/applicationId Android que l’application existante sur Google Play.
+* Vérifie le versionCode de la dernière version et utilise obligatoirement un versionCode supérieur.
+* Mets à jour le versionName pour identifier cette nouvelle version.
+* Inclus toutes les modifications et corrections actuellement présentes dans Paroisse Connect.
+* Ne supprime et ne désactive aucune fonctionnalité existante pour réussir le build.
+* Ne reviens pas à une ancienne version du projet.
+* Le nouvel AAB doit correspondre à l’état actuel de l’application.
+* Vérifie que le build Android est compatible avec les exigences actuelles de Google Play.
+* Le fichier doit être un véritable .aab de production/release signé, pas un APK, pas un ZIP et pas un build de développement.
+
+Avant toute modification importante de la configuration Android, demande-moi confirmation si cela peut affecter l’application déjà publiée, son package ou sa signature.
+
+Une fois toutes ces vérifications faites, génère le nouvel AAB signé avec la clé existante.
+
+À la fin, indique-moi clairement :
+
+1. le applicationId/package utilisé ;
+2. le nouveau versionCode ;
+3. le versionName ;
+4. que la clé existante a été conservée et n’a pas été réinitialisée ;
+5. que le build est un AAB release signé ;
+6. et donne-moi un moyen simple de télécharger le fichier .aab depuis mon iPhone.
+
+Ne réinitialise la clé sous aucun prétexte. Si la clé existante ne permet pas de construire l’AAB, arrête-toi et préviens-moi au lieu d’en générer une nouvelle.

@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mutualAidOffers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parishId", "order": "ASCENDING" },
+        { "fieldPath": "publicVersion", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mutualAidRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parishId", "order": "ASCENDING" },
+        { "fieldPath": "publicVersion", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

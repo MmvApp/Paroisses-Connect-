@@ -1,0 +1,1003 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    function authed() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function callerRole() {
+      return get(/databases/$(database)/documents/users/$(uid())).data.role;
+    }
+
+    function isSuperAdmin() {
+      return authed() && callerRole() == "super_admin";
+    }
+
+    // True when the existing document's ownerField equals the caller's uid
+    function isOwner(ownerField) {
+      return authed()
+        && resource.data.keys().hasAny([ownerField])
+        && resource.data[ownerField] == uid();
+    }
+
+    // Owner or privileged — used for content that authors can edit
+    function canEditContent(ownerField) {
+      return isOwner(ownerField) || isPrivileged();
+    }
+
+    function isGlobalAdmin() {
+      let profile = get(/databases/$(database)/documents/users/$(uid())).data;
+      return authed()
+        && (
+          callerRole() == "super_admin"
+          || (
+            callerRole() == "admin"
+            && !profile.keys().hasAny(["parishId", "priestParishId"])
+          )
+        );
+    }
+
+    function callerParishId() {
+      let profile = get(/databases/$(database)/documents/users/$(uid())).data;
+      return profile.keys().hasAny(["parishId"]) && profile.parishId != null && profile.parishId != ""
+        ? profile.parishId
+        : (
+          profile.keys().hasAny(["priestParishId"]) && profile.priestParishId != null && profile.priestParishId != ""
+            ? profile.priestParishId
+            : null
+        );
+    }
+
+    function isParishAdminFor(parishId) {
+      let parish = get(/databases/$(database)/documents/parishes/$(parishId)).data;
+      return authed()
+        && callerParishId() == parishId
+        && (
+          (
+            parish.keys().hasAny(["parishAdmins"])
+            && parish.parishAdmins.hasAny([uid()])
+          )
+          || callerRole() == "admin"
+        );
+    }
+
+    function isParishPriestFor(parishId) {
+      let parish = get(/databases/$(database)/documents/parishes/$(parishId)).data;
+      return authed()
+        && callerParishId() == parishId
+        && callerRole() == "priest"
+        && (
+          !parish.keys().hasAny(["priestUid"])
+          || parish.priestUid == null
+          || parish.priestUid == uid()
+        );
+    }
+
+    // admin and priest have moderation rights only within their own parish.
+    function isPrivileged() {
+      return isGlobalAdmin()
+        || (
+          callerParishId() != null
+          && (
+            isParishPriestFor(callerParishId())
+            || isParishAdminFor(callerParishId())
+          )
+        );
+    }
+
+    function isGroupMember(groupId) {
+      return authed()
+        && exists(/databases/$(database)/documents/groupMembers/$(groupId + "_" + uid()));
+    }
+
+    function isGroupLeader(groupId) {
+      return authed()
+        && exists(/databases/$(database)/documents/groups/$(groupId))
+        && get(/databases/$(database)/documents/groups/$(groupId)).data.keys().hasAny(["leaderUid"])
+        && get(/databases/$(database)/documents/groups/$(groupId)).data.leaderUid == uid();
+    }
+
+    function canAssignGroupLeader(groupId) {
+      return authed()
+        && exists(/databases/$(database)/documents/groups/$(groupId))
+        && (
+          isGlobalAdmin()
+          || isParishPriestFor(get(/databases/$(database)/documents/groups/$(groupId)).data.parishId)
+          || isParishAdminFor(get(/databases/$(database)/documents/groups/$(groupId)).data.parishId)
+        );
+    }
+
+    function canManageGroupMembers(groupId) {
+      return canAssignGroupLeader(groupId) || isGroupLeader(groupId);
+    }
+
+    // Some groups were created before memberCount became mandatory. Treat a
+    // missing or invalid legacy value as zero while requiring every new write
+    // to store a valid numeric counter.
+    function currentGroupMemberCount(groupData) {
+      return groupData.keys().hasAny(["memberCount"]) && groupData.memberCount is number
+        ? groupData.memberCount
+        : 0;
+    }
+
+    function canViewParishClaim(claim) {
+      return authed()
+        && (
+          isGlobalAdmin()
+          || (
+            claim.keys().hasAny(["claimantUid"])
+            && claim.claimantUid == uid()
+          )
+          || (
+            claim.keys().hasAny(["parishId"])
+            && claim.parishId == callerParishId()
+            && (
+              isParishPriestFor(claim.parishId)
+              || isParishAdminFor(claim.parishId)
+            )
+          )
+        );
+    }
+
+    function claimRequestedRole(claim) {
+      return claim.keys().hasAny(["requestedRole"])
+        && claim.requestedRole != null
+        && claim.requestedRole != ""
+        ? claim.requestedRole
+        : "priest";
+    }
+
+    function canReviewParishClaim(claim) {
+      return authed()
+        && (
+          isGlobalAdmin()
+          || (
+            claim.keys().hasAny(["parishId"])
+            && claim.parishId == callerParishId()
+            && (
+              isParishPriestFor(claim.parishId)
+              || (
+                isParishAdminFor(claim.parishId)
+                && get(/databases/$(database)/documents/parishes/$(claim.parishId)).data.claimsDelegatedToAdmins == true
+                && claimRequestedRole(claim) != "priest"
+              )
+            )
+          )
+        );
+    }
+
+    // New publications carry parishId. The author-profile fallback keeps
+    // deletion safe for legacy documents created before parishId was stored.
+    function publicationBelongsToCallerParish(parishField, ownerField) {
+      return resource.data.keys().hasAny([parishField])
+        && resource.data[parishField] != null
+        && resource.data[parishField] != ""
+        ? resource.data[parishField] == callerParishId()
+        : (
+          get(/databases/$(database)/documents/users/$(resource.data[ownerField])).data.keys().hasAny(["parishId"])
+          && get(/databases/$(database)/documents/users/$(resource.data[ownerField])).data.parishId != null
+          ? get(/databases/$(database)/documents/users/$(resource.data[ownerField])).data.parishId == callerParishId()
+          : get(/databases/$(database)/documents/users/$(resource.data[ownerField])).data.priestParishId == callerParishId()
+        );
+    }
+
+    function canDeletePublication(ownerField, parishField) {
+      return isGlobalAdmin()
+        || isOwner(ownerField)
+        || (
+          authed()
+          && callerRole() == "priest"
+          && callerParishId() != null
+          && publicationBelongsToCallerParish(parishField, ownerField)
+        );
+    }
+
+    // New content is query-scoped by parishId. Legacy documents without a
+    // parishId remain readable so the client can resolve their author's parish
+    // without deleting or rewriting historical content.
+    function canReadParishContent(parishField) {
+      return authed()
+        && (
+          isGlobalAdmin()
+          || !resource.data.keys().hasAny([parishField])
+          || resource.data[parishField] == null
+          || resource.data[parishField] == ""
+          || resource.data[parishField] == callerParishId()
+        );
+    }
+
+    // Announcements: any authed user may bump engagement counters
+    function isAnnouncementEngagement() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly([
+        "viewCount", "viewedBy",
+        "likeCount", "likedBy",
+        "shareCount", "commentCount"
+      ]);
+    }
+
+    // Prayers: any authed user may pray or comment-count
+    function isPrayerEngagement() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly(["prayerCount", "prayedBy", "commentCount"]);
+    }
+
+    function canReadAnnouncementComments(announcementId) {
+      return authed()
+        && exists(/databases/$(database)/documents/announcements/$(announcementId))
+        && (
+          isGlobalAdmin()
+          || !get(/databases/$(database)/documents/announcements/$(announcementId)).data.keys().hasAny(["parishId"])
+          || get(/databases/$(database)/documents/announcements/$(announcementId)).data.parishId == null
+          || get(/databases/$(database)/documents/announcements/$(announcementId)).data.parishId == ""
+          || get(/databases/$(database)/documents/announcements/$(announcementId)).data.parishId == callerParishId()
+        );
+    }
+
+    function canReadPrayerComments(prayerId) {
+      return authed()
+        && exists(/databases/$(database)/documents/prayers/$(prayerId))
+        && (
+          isGlobalAdmin()
+          || !get(/databases/$(database)/documents/prayers/$(prayerId)).data.keys().hasAny(["parishId"])
+          || get(/databases/$(database)/documents/prayers/$(prayerId)).data.parishId == null
+          || get(/databases/$(database)/documents/prayers/$(prayerId)).data.parishId == ""
+          || get(/databases/$(database)/documents/prayers/$(prayerId)).data.parishId == callerParishId()
+        );
+    }
+
+    // Events: any authed user may join or leave
+    function isEventParticipation() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly(["participants", "participantCount"]);
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // USERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /users/{userId} {
+      // Any authenticated user can read profiles (required by social features)
+      allow read: if authed();
+
+      // Sign-up: self only, role must start as "member"
+      allow create: if authed()
+        && uid() == userId
+        && request.resource.data.role == "member";
+
+      // Self-update: anything except the role field
+      allow update: if authed()
+        && uid() == userId
+        && !("role" in request.resource.data.diff(resource.data).affectedKeys());
+
+      // Global admins can change roles except to super_admin. A parish priest
+      // may validate a priest claim, while a local admin may only grant the
+      // local admin role within the same parish.
+      allow update: if isGlobalAdmin()
+        && request.resource.data.role != "super_admin";
+
+      allow update: if authed()
+        && request.resource.data.role == "priest"
+        && request.resource.data.parishId == callerParishId()
+        && isParishPriestFor(request.resource.data.parishId)
+        && exists(/databases/$(database)/documents/parishClaims/$(request.resource.data.parishId))
+        && getAfter(/databases/$(database)/documents/parishClaims/$(request.resource.data.parishId)).data.claimantUid == userId
+        && getAfter(/databases/$(database)/documents/parishClaims/$(request.resource.data.parishId)).data.status == "approved"
+        && claimRequestedRole(getAfter(/databases/$(database)/documents/parishClaims/$(request.resource.data.parishId)).data) == "priest";
+
+      allow update: if authed()
+        && request.resource.data.role == "admin"
+        && request.resource.data.parishId == callerParishId()
+        && (
+          isParishPriestFor(request.resource.data.parishId)
+          || (
+            isParishAdminFor(request.resource.data.parishId)
+            && get(/databases/$(database)/documents/parishes/$(request.resource.data.parishId)).data.claimsDelegatedToAdmins == true
+          )
+        );
+
+      allow update: if authed()
+        && request.resource.data.role == "member"
+        && request.resource.data.parishId == callerParishId()
+        && (
+          isParishPriestFor(request.resource.data.parishId)
+          || isParishAdminFor(request.resource.data.parishId)
+        );
+
+      // Hard-delete of a user document: super_admin only
+      allow delete: if isSuperAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PARISHES
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /parishes/{parishId} {
+      // Public read — needed for the unauthenticated parish directory
+      allow read: if true;
+
+      allow create, update: if isGlobalAdmin()
+        || isParishPriestFor(parishId)
+        || isParishAdminFor(parishId);
+
+      // Deleting a parish is a destructive action: super_admin only
+      allow delete: if isSuperAdmin();
+
+      // Structured celebration schedules stay scoped to their parent parish.
+      // The parish document remains the source for legacy schedules.
+      match /massSchedules/{scheduleId} {
+        allow read: if authed()
+          && (isGlobalAdmin() || callerParishId() == parishId);
+
+        allow create: if isGlobalAdmin()
+          || (
+            (isParishPriestFor(parishId) || isParishAdminFor(parishId))
+            && request.resource.data.parishId == parishId
+          );
+
+        allow update: if isGlobalAdmin()
+          || (
+            (isParishPriestFor(parishId) || isParishAdminFor(parishId))
+            && resource.data.parishId == parishId
+            && request.resource.data.parishId == parishId
+          );
+
+        allow delete: if isGlobalAdmin()
+          || isParishPriestFor(parishId)
+          || isParishAdminFor(parishId);
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PARISH CLAIMS (priest claiming a parish)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /parishClaims/{claimId} {
+      allow read: if canViewParishClaim(resource.data);
+
+      allow create: if authed()
+        && request.resource.data.claimantUid == uid()
+        && request.resource.data.status == "pending"
+        && request.resource.data.parishId != null
+        && claimRequestedRole(request.resource.data) in ["priest", "admin", "member", "moderator"];
+
+      allow update: if canReviewParishClaim(resource.data)
+        && resource.data.status == "pending"
+        && request.resource.data.status in ["approved", "rejected"]
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "status", "reviewedAt", "reviewedBy", "reviewedByUid"
+        ]);
+
+      allow delete: if isGlobalAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ANNOUNCEMENTS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /announcements/{docId} {
+      allow read: if canReadParishContent("parishId");
+
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+
+      // Any authed user may update engagement fields (views, likes, shares…)
+      allow update: if authed() && isAnnouncementEngagement();
+
+      // Full update (content, isPinned, category…): owner or privileged
+      allow update: if canEditContent("authorId");
+
+      allow delete: if canDeletePublication("authorId", "parishId");
+
+      match /comments/{commentId} {
+        allow read: if canReadAnnouncementComments(docId);
+        allow create: if canReadAnnouncementComments(docId)
+          && request.resource.data.authorId == uid()
+          && request.resource.data.authorName is string
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+        allow update: if canReadAnnouncementComments(docId)
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.keys().hasAll(["updatedAt"])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text", "updatedAt"]);
+        allow delete: if authed()
+          && resource.data.authorId == uid()
+          || (canReadAnnouncementComments(docId) && isPrivileged());
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // EVENTS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /events/{docId} {
+      allow read: if authed();
+
+      // Only privileged roles may create events
+      allow create: if isPrivileged()
+        && request.resource.data.authorId == uid()
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+
+      // Any authed user may join or leave (participants array only)
+      allow update: if authed() && isEventParticipation();
+
+      // Full update or delete: owner or privileged
+      allow update: if canEditContent("authorId");
+      allow delete: if canDeletePublication("authorId", "parishId");
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PRAYERS & INTENTIONS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /prayers/{docId} {
+      allow read: if canReadParishContent("parishId");
+
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+
+      // Any authed user may pray (prayerCount, prayedBy) or update commentCount
+      allow update: if authed() && isPrayerEngagement();
+
+      // Full update (content, status approve/refuse…): owner or privileged
+      allow update: if canEditContent("authorId");
+
+      allow delete: if canDeletePublication("authorId", "parishId");
+
+      match /comments/{commentId} {
+        allow read: if canReadPrayerComments(docId);
+        allow create: if canReadPrayerComments(docId)
+          && request.resource.data.authorId == uid()
+          && request.resource.data.authorName is string
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500;
+        allow update: if canReadPrayerComments(docId)
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500
+          && request.resource.data.keys().hasAll(["updatedAt"])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["content", "updatedAt"]);
+        allow delete: if authed()
+          && resource.data.authorId == uid()
+          || (canReadPrayerComments(docId) && isPrivileged());
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CONVERSATIONS (messagerie directe)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /conversations/{convId} {
+      // Only participants can read a conversation
+      allow read: if authed()
+        && uid() in resource.data.participants;
+
+      // A private conversation is always exactly two existing users.
+      allow create: if authed()
+        && request.resource.data.participants.size() == 2
+        && uid() in request.resource.data.participants
+        && request.resource.data.participants[0] is string
+        && request.resource.data.participants[1] is string
+        && (
+          convId == request.resource.data.participants[0] + "_" + request.resource.data.participants[1]
+          || convId == request.resource.data.participants[1] + "_" + request.resource.data.participants[0]
+        )
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.participants[0]))
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.participants[1]));
+
+      // Participants may update metadata, but never change the participants.
+      allow update: if authed()
+        && resource.data.participants.size() == 2
+        && uid() in resource.data.participants
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "participantNames", "participantPhotos", "lastMessage", "lastMessageAt",
+          "lastMessageBy", "lastReadAt"
+        ])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastReadAt"])
+          || request.resource.data.lastReadAt[uid()] == request.time
+        );
+
+      // Conversations are never deleted from the client
+      allow delete: if false;
+
+      // ── DM messages sub-collection ───────────────────────────────────────
+      match /messages/{msgId} {
+        // Only participants may read messages
+        allow read: if authed()
+          && uid() in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+
+        // Participant may post a message identifying themselves
+        allow create: if authed()
+          && uid() in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
+          && request.resource.data.authorId == uid();
+
+        // Only the original sender may edit text. Sender identity and timestamps
+        // are immutable after creation.
+        allow update: if authed()
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text"]);
+        allow delete: if authed() && resource.data.authorId == uid();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // GROUP CONVERSATIONS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /groupConversations/{groupId} {
+      // Membership is checked from the canonical groupMembers document, not
+      // from a client-provided participants list.
+      allow read: if isGroupMember(groupId);
+
+      allow create: if isGroupMember(groupId)
+        && request.resource.data.groupId == groupId
+        && request.resource.data.parishId == get(/databases/$(database)/documents/groups/$(groupId)).data.parishId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0;
+
+      allow update: if isGroupMember(groupId)
+        && resource.data.groupId == groupId
+        && request.resource.data.groupId == resource.data.groupId
+        && request.resource.data.parishId == resource.data.parishId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "name", "lastMessage", "lastMessageAt", "lastMessageBy", "lastReadAt"
+        ])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastReadAt"])
+          || request.resource.data.lastReadAt[uid()] == request.time
+        );
+
+      allow delete: if false;
+
+      match /messages/{msgId} {
+        allow read: if isGroupMember(groupId);
+
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.groupId == groupId
+          && request.resource.data.authorId == uid()
+          && request.resource.data.authorName is string
+          && request.resource.data.authorName.size() > 0
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.parishId == get(/databases/$(database)/documents/groups/$(groupId)).data.parishId;
+
+        allow update: if isGroupMember(groupId)
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text"])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        allow delete: if isGroupMember(groupId)
+          && resource.data.authorId == uid();
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // MESSAGES (group messages & DM)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /messages/{msgId} {
+      // Authed read — the app always filters by conversationId / groupId
+      allow read: if authed();
+
+      // Sender must identify themselves
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+
+      // Only the original sender may edit or delete their message
+      allow update, delete: if authed()
+        && resource.data.authorId == uid();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // GROUPS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /groups/{groupId} {
+      allow read: if authed();
+
+      allow create: if authed()
+        && request.resource.data.createdBy == uid();
+
+      // Group creator or privileged may modify or disband the group. A normal
+      // member may only update the counter as part of the same atomic
+      // membership write that adds or removes their own membership document.
+      allow update: if (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(["leaderUid"])
+          && (
+            canEditContent("createdBy")
+            || (
+              isGroupLeader(groupId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "name", "description", "icon", "schedule", "imageUrls"
+              ])
+            )
+          )
+        )
+        || (
+          request.resource.data.diff(resource.data).affectedKeys().hasAny(["leaderUid"])
+          && canAssignGroupLeader(groupId)
+          && request.resource.data.leaderUid is string
+        )
+        || (
+          authed()
+          && request.resource.data.memberCount is number
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["memberCount"])
+          && (
+            (
+              request.resource.data.memberCount == currentGroupMemberCount(resource.data) + 1
+              && !exists(/databases/$(database)/documents/groupMembers/$(groupId + "_" + uid()))
+              && existsAfter(/databases/$(database)/documents/groupMembers/$(groupId + "_" + uid()))
+            )
+            || (
+              request.resource.data.memberCount == currentGroupMemberCount(resource.data) - 1
+              && exists(/databases/$(database)/documents/groupMembers/$(groupId + "_" + uid()))
+              && !existsAfter(/databases/$(database)/documents/groupMembers/$(groupId + "_" + uid()))
+            )
+          )
+        );
+      allow delete: if canEditContent("createdBy");
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // GROUP MEMBERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /groupMembers/{docId} {
+      allow read: if authed();
+
+      // A user can only create their own deterministic membership document.
+      allow create: if authed()
+        && request.resource.data.userId == uid()
+        && request.resource.data.groupId is string
+        && docId == request.resource.data.groupId + "_" + uid()
+        && exists(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+        && request.resource.data.parishId == get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.parishId;
+
+      // Self-leave or privileged kick
+      allow update, delete: if authed()
+        && (
+          resource.data.userId == uid()
+          || (
+            resource.data.keys().hasAny(["groupId"])
+            && canManageGroupMembers(resource.data.groupId)
+          )
+        );
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // FRIEND REQUESTS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /friendRequests/{docId} {
+      // Only sender or recipient may see the request
+      allow read: if authed()
+        && (resource.data.fromUid == uid() || resource.data.toUid == uid());
+
+      // Only the sender can initiate a request
+      allow create: if authed()
+        && request.resource.data.fromUid == uid();
+
+      // Either party can accept, decline, or cancel
+      allow update, delete: if authed()
+        && (resource.data.fromUid == uid() || resource.data.toUid == uid());
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // FRIENDSHIPS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /friendships/{docId} {
+      // Only the two friends may read the record (field name: uids)
+      allow read: if authed()
+        && uid() in resource.data.uids;
+
+      // Either party creates the friendship (after request accepted)
+      allow create: if authed()
+        && uid() in request.resource.data.uids;
+
+      // Either party may unfriend (delete)
+      allow delete: if authed()
+        && uid() in resource.data.uids;
+
+      // Friendship records are immutable — delete and re-create if needed
+      allow update: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // NOTIFICATIONS — sous-collection par utilisateur
+    // Structure : notifications/{userId}/items/{notifId}
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /notifications/{userId} {
+      // Le document parent n'est jamais utilisé directement
+      allow read, write: if false;
+
+      match /items/{notifId} {
+        // Le destinataire lit ses propres notifications
+        allow read: if authed() && uid() == userId;
+
+        // Tout utilisateur authentifié peut envoyer une notification
+        // (annonce paroissiale, DM, covoiturage, etc.)
+        allow create: if authed();
+
+        // Seul le destinataire marque comme lu ou supprime
+        allow update, delete: if authed() && uid() == userId;
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RIDES / COVOITURAGE
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /rides/{docId} {
+      allow read: if canReadParishContent("parishId");
+
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+
+      // Driver (authorId) or privileged may update or cancel a ride
+      allow update: if canEditContent("authorId");
+      allow delete: if canDeletePublication("authorId", "parishId");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RIDE REQUESTS / DEMANDES DE PARTICIPATION
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /rideRequests/{requestId} {
+      // Le passager et le conducteur du trajet peuvent suivre la demande.
+      allow read: if authed()
+        && (
+          resource.data.passengerId == uid()
+          || resource.data.driverId == uid()
+        );
+
+      // Le document est créé avec un identifiant déterministe rideId_uid :
+      // une seconde création pour le même trajet devient donc impossible.
+      allow create: if authed()
+        && request.resource.data.passengerId == uid()
+        && request.resource.data.status == "pending"
+        && request.resource.data.driverId != uid()
+        && request.resource.data.rideId is string
+        && requestId == request.resource.data.rideId + "_" + uid()
+        && exists(/databases/$(database)/documents/rides/$(request.resource.data.rideId))
+        && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.type == "offer"
+        && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.authorId == request.resource.data.driverId
+        && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.seatsAvailable > 0;
+
+      // Seul le conducteur peut décider. L'acceptation et la décrémentation
+      // des places doivent appartenir à la même transaction Firestore.
+      allow update: if authed()
+        && resource.data.driverId == uid()
+        && resource.data.status == "pending"
+        && request.resource.data.rideId == resource.data.rideId
+        && request.resource.data.driverId == resource.data.driverId
+        && request.resource.data.passengerId == resource.data.passengerId
+        && request.resource.data.status in ["accepted", "refused"]
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"])
+        && (
+          request.resource.data.status == "refused"
+          || (
+            getAfter(/databases/$(database)/documents/rides/$(resource.data.rideId)).data.authorId == uid()
+            && getAfter(/databases/$(database)/documents/rides/$(resource.data.rideId)).data.seatsAvailable
+              == get(/databases/$(database)/documents/rides/$(resource.data.rideId)).data.seatsAvailable - 1
+          )
+        );
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // MUTUAL AID
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /mutualAidOffers/{docId} {
+      // Only version 2 documents are public. Legacy documents containing a
+      // phone number remain visible to their owner/moderators only.
+      allow read: if (
+        resource.data.publicVersion == 2
+        && !resource.data.keys().hasAny(["phone"])
+        && canReadParishContent("parishId")
+      ) || canEditContent("authorId");
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && request.resource.data.publicVersion == 2
+        && !request.resource.data.keys().hasAny(["phone"])
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+      allow update: if canEditContent("authorId")
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.publicVersion == resource.data.publicVersion
+        && !request.resource.data.keys().hasAny(["phone"])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "type", "message", "availability", "status", "updatedAt",
+          "authorName", "authorPhotoURL"
+        ]);
+      allow delete: if canDeletePublication("authorId", "parishId");
+
+      match /private/{contactId} {
+        allow read: if authed()
+          && (
+            get(/databases/$(database)/documents/mutualAidOffers/$(docId)).data.authorId == uid()
+            || isPrivileged()
+          );
+        allow create: if authed()
+          && contactId == "contact"
+          && request.resource.data.authorId == uid()
+          && get(/databases/$(database)/documents/mutualAidOffers/$(docId)).data.authorId == uid();
+        allow update: if authed()
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone"]);
+        allow delete: if false;
+      }
+    }
+
+    match /mutualAidRequests/{docId} {
+      allow read: if (
+        resource.data.publicVersion == 2
+        && !resource.data.keys().hasAny(["phone"])
+        && canReadParishContent("parishId")
+      ) || canEditContent("authorId");
+      allow create: if authed()
+        && request.resource.data.authorId == uid()
+        && request.resource.data.publicVersion == 2
+        && !request.resource.data.keys().hasAny(["phone"])
+        && (isGlobalAdmin() || request.resource.data.parishId == callerParishId());
+      allow update: if canEditContent("authorId")
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.publicVersion == resource.data.publicVersion
+        && !request.resource.data.keys().hasAny(["phone"])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "serviceTitle", "message", "status", "updatedAt",
+          "authorName", "authorPhotoURL"
+        ]);
+      allow delete: if canDeletePublication("authorId", "parishId");
+
+      match /private/{contactId} {
+        allow read: if authed()
+          && (
+            get(/databases/$(database)/documents/mutualAidRequests/$(docId)).data.authorId == uid()
+            || isPrivileged()
+          );
+        allow create: if authed()
+          && contactId == "contact"
+          && request.resource.data.authorId == uid()
+          && get(/databases/$(database)/documents/mutualAidRequests/$(docId)).data.authorId == uid();
+        allow update: if authed()
+          && resource.data.authorId == uid()
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone"]);
+        allow delete: if false;
+      }
+    }
+
+    match /mutualAidInterests/{interestId} {
+      allow read: if authed()
+        && (
+          resource.data.interestedUid == uid()
+          || resource.data.targetAuthorId == uid()
+        );
+
+      allow create: if authed()
+        && request.resource.data.interestedUid == uid()
+        && request.resource.data.targetAuthorId != uid()
+        && request.resource.data.status == "pending"
+        && request.resource.data.targetType in ["offer", "request"]
+        && request.resource.data.targetId is string
+        && interestId == request.resource.data.targetType + "_" + request.resource.data.targetId + "_" + uid()
+        && request.resource.data.parishId == callerParishId()
+        && (
+          (
+            request.resource.data.targetType == "offer"
+            && exists(/databases/$(database)/documents/mutualAidOffers/$(request.resource.data.targetId))
+            && get(/databases/$(database)/documents/mutualAidOffers/$(request.resource.data.targetId)).data.publicVersion == 2
+            && get(/databases/$(database)/documents/mutualAidOffers/$(request.resource.data.targetId)).data.authorId == request.resource.data.targetAuthorId
+            && get(/databases/$(database)/documents/mutualAidOffers/$(request.resource.data.targetId)).data.parishId == callerParishId()
+          )
+          ||
+          (
+            request.resource.data.targetType == "request"
+            && exists(/databases/$(database)/documents/mutualAidRequests/$(request.resource.data.targetId))
+            && get(/databases/$(database)/documents/mutualAidRequests/$(request.resource.data.targetId)).data.publicVersion == 2
+            && get(/databases/$(database)/documents/mutualAidRequests/$(request.resource.data.targetId)).data.authorId == request.resource.data.targetAuthorId
+            && get(/databases/$(database)/documents/mutualAidRequests/$(request.resource.data.targetId)).data.parishId == callerParishId()
+          )
+        );
+
+      allow update: if authed()
+        && resource.data.targetAuthorId == uid()
+        && resource.data.status == "pending"
+        && request.resource.data.targetType == resource.data.targetType
+        && request.resource.data.targetId == resource.data.targetId
+        && request.resource.data.targetAuthorId == resource.data.targetAuthorId
+        && request.resource.data.interestedUid == resource.data.interestedUid
+        && request.resource.data.status in ["accepted", "refused"]
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"]);
+      allow delete: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PARISH REPORTS (signalements de contenus)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /parishReports/{docId} {
+      // Only privileged roles see reports
+      allow read:           if isPrivileged();
+      // Any authenticated user may file a report
+      allow create:         if authed();
+      // Privileged handles (resolves / deletes) reports
+      allow update, delete: if isPrivileged();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ADMIN LOGS (journal d'audit — immuable)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /adminLogs/{docId} {
+      // Only super_admin reads the audit trail
+      allow read: if isSuperAdmin();
+
+      // Privileged actions may append log entries
+      allow create: if isPrivileged();
+
+      // Logs are append-only — no update or delete ever
+      allow update, delete: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CATCH-ALL — deny everything not explicitly covered above
+    // ══════════════════════════════════════════════════════════════════════════
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

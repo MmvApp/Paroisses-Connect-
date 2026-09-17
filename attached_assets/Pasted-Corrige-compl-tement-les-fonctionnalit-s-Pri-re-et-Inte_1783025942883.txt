@@ -1,0 +1,68 @@
+Corrige complètement les fonctionnalités “Prière” et “Intention de prière” de Paroisse Connect.
+
+Actuellement, elles ne fonctionnent pas correctement. Je veux qu’elles soient entièrement opérationnelles.
+
+Fonctionnement attendu
+
+1. Publier une prière
+
+* Le bouton Publier doit fonctionner.
+* La prière doit être enregistrée dans la base de données (Firebase).
+* Elle doit apparaître immédiatement dans le fil des prières, sans redémarrer l’application.
+* Si l’utilisateur est hors connexion, afficher un message d’erreur clair.
+* Afficher un indicateur de chargement pendant l’envoi.
+
+2. Publier une intention de prière
+
+* Le bouton Publier doit fonctionner.
+* L’intention doit être enregistrée dans Firebase.
+* Elle doit apparaître immédiatement dans la liste des intentions.
+* Les autres utilisateurs doivent la voir en temps réel.
+
+3. Affichage
+
+Chaque publication doit afficher :
+
+* la photo de profil de l’auteur ;
+* son nom ;
+* la paroisse ;
+* la date et l’heure ;
+* le texte complet ;
+* le nombre de prières (“🙏 Je prie”) ;
+* le nombre de commentaires.
+
+4. Interaction
+
+Les utilisateurs doivent pouvoir :
+
+* prier pour une intention (un seul vote par utilisateur) ;
+* retirer leur prière ;
+* commenter ;
+* modifier leur propre publication ;
+* supprimer leur propre publication ;
+* signaler une publication.
+
+5. Temps réel
+
+Toutes les modifications (ajout, suppression, modification, commentaires, compteur de prières) doivent se mettre à jour instantanément chez tous les utilisateurs grâce aux écouteurs temps réel de Firebase.
+
+6. Permissions
+
+* Un utilisateur ne peut modifier ou supprimer que ses propres publications.
+* Les administrateurs de paroisse peuvent modérer les publications de leur paroisse.
+* Les administrateurs généraux peuvent tout modérer.
+
+7. Sécurité
+
+Vérifie et corrige les règles Firebase afin que seuls les utilisateurs authentifiés puissent publier, modifier ou supprimer leurs propres contenus.
+
+8. Qualité
+
+* Corrige toutes les erreurs de console.
+* Supprime les chargements infinis.
+* Empêche les doublons.
+* Empêche les publications vides.
+* Optimise les requêtes Firebase.
+* Vérifie que tout fonctionne sur Android, iPhone et en version Web.
+
+Une fois terminé, exécute tous les tests et confirme que les fonctionnalités Prière et Intention de prière sont entièrement fonctionnelles de bout en bout.

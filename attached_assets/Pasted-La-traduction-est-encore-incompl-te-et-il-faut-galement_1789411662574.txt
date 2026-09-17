@@ -1,0 +1,28 @@
+La traduction est encore incomplète et il faut également améliorer la présentation du choix de langue.
+
+Actuellement, sur une même page, certains éléments sont traduits en anglais alors que beaucoup restent en français. Par exemple, la barre de navigation affiche “Home”, “My parish”, “Messages”, “Profile”, mais des éléments comme “Actualités”, “Horaires des messes”, “Intentions de prière”, “Annonces”, etc. restent en français.
+
+Je veux que le changement de langue s’applique à toute l’application, et pas seulement à certains composants.
+
+Vérifie écran par écran tous les textes fixes de l’interface : titres, boutons, menus, catégories, formulaires, pages de paroisse, actualités, horaires des messes, événements, intentions de prière, annonces, groupes, aide/entraide, covoiturage, profil, paramètres, notifications, conversations, messages d’erreur, fenêtres pop-up, confirmations, etc.
+
+Tous les textes fixes encore écrits directement dans le code doivent passer par le système de traduction. Quand l’utilisateur choisit English, aucun texte fixe de l’interface ne doit rester en français. Même principe pour Français, Română, Italiano et Deutsch.
+
+⚠️ Ne traduis pas les contenus créés par les utilisateurs ou les paroisses : publications, messages, noms de paroisses, commentaires, intentions écrites par les utilisateurs, etc. Seule l’interface de l’application doit être traduite.
+
+Je veux également modifier le sélecteur de langue. Actuellement, les 5 langues sont affichées en permanence sur l’accueil et prennent beaucoup trop de place. Cela ne fait pas professionnel.
+
+À la place, affiche uniquement un bouton compact avec l’icône 🌐 et “Changer la langue”, traduit lui-même dans la langue actuellement utilisée.
+
+Seulement lorsque l’utilisateur appuie sur ce bouton, ouvre le choix complet :
+Français — English — Română — Italiano — Deutsch.
+
+Dès qu’une langue est sélectionnée :
+
+* appliquer immédiatement la nouvelle langue à toute l’interface ;
+* refermer automatiquement le sélecteur ;
+* enregistrer le choix pour qu’il reste identique après rechargement, fermeture et réouverture de l’application.
+
+Vérifie ensuite réellement le fonctionnement dans toute l’application sur iPhone/web, Android et web.
+
+Ne supprime, ne déplace et ne modifie aucune fonctionnalité existante en dehors de ce qui est demandé ici.

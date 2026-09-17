@@ -1,0 +1,92 @@
+Créer une page d'accueil publique moderne pour Paroisse Connect.
+
+Objectif :
+Les visiteurs qui arrivent depuis Google doivent d'abord découvrir l'application avant de se connecter.
+
+Conserver toutes les fonctionnalités existantes. Ne rien casser.
+
+La page doit être très claire, moderne, responsive (mobile, tablette et ordinateur) et dans le même style que l'application (fond clair, élégant).
+
+Contenu :
+
+Titre principal :
+Paroisse Connect
+
+Sous-titre :
+L'application des paroisses catholiques.
+
+Texte :
+Paroisse Connect permet aux paroisses et aux fidèles de communiquer facilement, consulter les horaires des messes, publier des annonces, déposer des intentions de prière, rejoindre des groupes, organiser du covoiturage et participer à la vie paroissiale.
+
+Créer une section "Fonctionnalités" avec des cartes illustrées :
+
+📅 Horaires des messes
+
+🙏 Intentions de prière
+
+📢 Annonces paroissiales
+
+👥 Groupes paroissiaux
+
+💬 Messagerie
+
+🚗 Covoiturage
+
+📸 Photos et événements
+
+⛪ Recherche de paroisses
+
+Ajouter une section :
+
+Pourquoi choisir Paroisse Connect ?
+
+• Une application pensée pour les paroisses.
+• Facile à utiliser.
+• Sécurisée.
+• Accessible sur le Web, Android et iPhone.
+• Permet de rapprocher prêtres, bénévoles et fidèles.
+
+Ajouter deux grands boutons :
+
+Se connecter
+Créer un compte
+
+Ces boutons doivent ouvrir exactement les écrans actuels sans modifier leur fonctionnement.
+
+Ajouter une section :
+
+Découvrir l'application
+
+Afficher plusieurs captures d'écran de l'application avec un carrousel.
+
+Ajouter une section :
+
+Questions fréquentes (FAQ)
+
+Répondre aux principales questions :
+- Est-ce gratuit ?
+- Comment trouver ma paroisse ?
+- Qui peut publier ?
+- Comment devenir administrateur d'une paroisse ?
+
+Ajouter en bas de page :
+
+Mentions légales
+Politique de confidentialité
+CGU
+Contact
+À propos
+
+Optimiser complètement le SEO de cette nouvelle page.
+
+Ne modifier aucune logique Firebase.
+
+Ne modifier aucune authentification.
+
+Ne modifier aucune permission.
+
+Ne modifier aucune base de données.
+
+Conserver toutes les fonctionnalités existantes.
+
+Créer simplement une page d'accueil publique professionnelle qui améliore l'image de Paroisse Connect et son référencement Google.

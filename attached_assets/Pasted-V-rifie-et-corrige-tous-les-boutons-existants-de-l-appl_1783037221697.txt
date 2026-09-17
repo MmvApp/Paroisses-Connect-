@@ -1,0 +1,173 @@
+Vérifie et corrige tous les boutons existants de l’application Paroisse Connect pour Android, iPhone et Web.
+
+Objectif :
+Chaque bouton doit faire exactement sa tâche prévue, sans bug, sur les 3 plateformes.
+
+À faire :
+
+1. Scanner toute l’application
+
+* Cherche tous les boutons :
+    * Button
+    * TouchableOpacity
+    * Pressable
+    * TouchableHighlight
+    * IconButton
+    * menus “trois points”
+    * boutons de navigation
+    * boutons publier, supprimer, modifier, retour, profil, photo, groupes, chat, paroisse, prière, intention de prière, déconnexion, refresh
+
+2. Pour chaque bouton
+
+* Vérifie qu’il a bien un onPress / onClick.
+* Vérifie que la fonction appelée existe.
+* Vérifie que la fonction ne provoque pas d’erreur.
+* Vérifie que le bouton fonctionne sur :
+    * iPhone
+    * Android
+    * Web
+
+3. Corriger automatiquement
+
+* Si un bouton ne fonctionne pas, corrige-le.
+* Si un bouton n’a pas d’action, ajoute l’action correcte.
+* Si un menu trois points ne s’ouvre pas, remplace-le par un menu compatible Android/iPhone/Web.
+* Si un bouton est trop petit ou difficile à cliquer, rends-le plus accessible.
+* Si un bouton est caché par le clavier ou trop bas, corrige le SafeAreaView et KeyboardAvoidingView.
+
+4. Règles obligatoires
+
+* Utilise Pressable ou TouchableOpacity compatible Expo.
+* Ne mets pas de code spécifique uniquement Android ou uniquement iPhone sans fallback Web.
+* Ajoute try/catch autour des actions importantes.
+* Ajoute console.log clair pour chaque action de bouton.
+* Ajoute une alerte visible si une action échoue.
+* Garde le design clair : fond blanc/crème, texte noir, bleu clair pour les actions.
+
+5. Boutons importants à vérifier absolument
+
+* Connexion
+* Inscription
+* Déconnexion
+* Modifier profil
+* Changer photo de profil
+* Publier un post
+* Supprimer un post
+* Modifier un post
+* Menu trois points
+* Ajouter une intention de prière
+* Supprimer une intention de prière
+* Rejoindre un groupe
+* Quitter un groupe
+* Envoyer un message
+* Retour
+* Recherche paroisse
+* Choisir diocèse
+* Ajouter/modifier horaires de messe
+* Refresh en tirant vers le bas
+* Changement de page par glissement droite/gauche
+
+6. Ajoute ce composant global si nécessaire :
+
+import React from "react";
+import {
+  Pressable,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  Alert,
+  ViewStyle,
+  TextStyle,
+} from "react-native";
+type AppButtonProps = {
+  title: string;
+  onPress: () => void | Promise<void>;
+  disabled?: boolean;
+  loading?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+};
+export function AppButton({
+  title,
+  onPress,
+  disabled = false,
+  loading = false,
+  style,
+  textStyle,
+}: AppButtonProps) {
+  const handlePress = async () => {
+    if (disabled || loading) return;
+    try {
+      console.log(`[BUTTON] ${title} pressed`);
+      await onPress();
+    } catch (error) {
+      console.error(`[BUTTON ERROR] ${title}`, error);
+      if (Platform.OS === "web") {
+        window.alert("Une erreur est survenue. Réessayez.");
+      } else {
+        Alert.alert("Erreur", "Une erreur est survenue. Réessayez.");
+      }
+    }
+  };
+  return (
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled || loading}
+      style={({ pressed }) => [
+        styles.button,
+        pressed && styles.pressed,
+        (disabled || loading) && styles.disabled,
+        style,
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator />
+      ) : (
+        <Text style={[styles.text, textStyle]}>{title}</Text>
+      )}
+    </Pressable>
+  );
+}
+const styles = StyleSheet.create({
+  button: {
+    minHeight: 48,
+    minWidth: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    backgroundColor: "#8ED6FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 6,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  disabled: {
+    opacity: 0.4,
+  },
+  text: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
+
+7. Remplace progressivement tous les anciens boutons instables par AppButton.
+
+Exemple :
+
+<AppButton
+  title="Publier"
+  onPress={async () => {
+    await publishPost();
+  }}
+/>
+
+8. Après correction
+
+* Lance le projet.
+* Vérifie toutes les pages.
+* Corrige toutes les erreurs TypeScript.
+* Donne-moi la liste des boutons réparés et ceux qui n’existaient pas encore.

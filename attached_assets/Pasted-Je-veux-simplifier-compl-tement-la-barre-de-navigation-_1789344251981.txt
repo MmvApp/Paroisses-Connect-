@@ -1,0 +1,80 @@
+Je veux simplifier complètement la barre de navigation du bas.
+
+Actuellement, elle contient beaucoup trop de raccourcis. Plusieurs fonctions sont affichées en double alors qu’elles sont déjà accessibles sous forme de carrés sur la page d’accueil. Cela surcharge l’écran, réduit la taille des icônes et coupe les textes avec « … ».
+
+L’application doit rester très simple et lisible, notamment pour des utilisateurs âgés.
+
+Nouvelle barre du bas
+
+Je veux garder UNIQUEMENT 4 boutons :
+
+🏠 Accueil
+⛪ Ma paroisse
+💬 Messages
+👤 Profil
+
+Les boutons doivent être bien espacés, avec des icônes suffisamment grandes et des textes entièrement lisibles.
+
+Remplacer « Lieux » par « Ma paroisse »
+
+Je ne veux plus du bouton « Lieux ».
+
+Il doit devenir « Ma paroisse ».
+
+Fonctionnement :
+
+* Si l’utilisateur n’a encore sélectionné aucune paroisse, appuyer sur « Ma paroisse » doit l’envoyer vers la page permettant de choisir/rechercher sa paroisse.
+* S’il a déjà choisi une paroisse, appuyer sur « Ma paroisse » doit ouvrir directement la page de sa paroisse.
+* Depuis cette page, il doit toujours être possible de changer de paroisse.
+
+Ne supprime surtout pas la recherche des paroisses ni les fonctionnalités actuellement liées à « Lieux ». Il s’agit de rendre leur accès plus compréhensible.
+
+Retirer les doublons de la barre du bas
+
+Je ne veux PLUS dans la barre du bas les raccourcis comme :
+
+* Actualités
+* Groupes
+* Covoiturage
+* Intentions de prière / Prières
+* Agenda
+* Aide / Entraide
+* Horaires des messes
+* autres modules déjà accessibles depuis les carrés de l’accueil
+
+Ces fonctionnalités NE DOIVENT PAS être supprimées.
+
+Elles doivent simplement rester accessibles depuis leurs carrés et emplacements actuels sur la page d’accueil.
+
+Notifications
+
+Ne mets PAS « Notifications » dans la barre du bas.
+
+La cloche de notifications existe déjà en haut à droite de l’application. Elle doit rester à cet endroit et continuer à fonctionner normalement.
+
+IMPORTANT
+
+Cette modification concerne principalement la NAVIGATION.
+
+Ne supprime aucune fonctionnalité existante.
+Ne supprime aucune page.
+Ne modifie pas le fonctionnement des groupes, messages, actualités, covoiturage, prières, agenda, entraide, etc.
+Ne recrée pas ces fonctionnalités ailleurs.
+
+Je veux simplement supprimer les raccourcis en double et obtenir une navigation beaucoup plus propre.
+
+La barre finale doit donc être :
+
+ACCUEIL | MA PAROISSE | MESSAGES | PROFIL
+
+Vérifie également que :
+
+* aucun texte n’est coupé avec « … » ;
+* les textes et icônes sont suffisamment grands pour des personnes âgées ;
+* les 4 boutons utilisent correctement toute la largeur disponible ;
+* la barre reste stable ;
+* le contenu ne passe pas derrière la barre ;
+* la zone tactile de chaque bouton est suffisamment grande ;
+* le résultat fonctionne correctement sur iPhone, Android et Web/PWA.
+
+Fais cette modification sans casser ni modifier les fonctionnalités actuellement opérationnelles.

@@ -1,0 +1,18 @@
+- [Firebase Rules REST API PATCH format](firebase-rules-patch.md) — PATCH release doit envelopper dans `{ release: { name, rulesetName } }`, pas à plat.
+- [Firebase CLI auth headless](firebase-headless-auth.md) — auth.firebase.tools nécessite User-Agent + X-Client-Version FirebaseCLI/15.22.4 pour que /attest fonctionne.
+- [Expo native release boundary](expo-native-release-boundary.md) — une publication Web ne met pas à jour les binaires iOS/Android installés ; un correctif mobile exige une mise à jour ou un nouveau build Expo.
+- [Parish content scoping](parish-content-scoping.md) — les documents legacy sans parishId compliquent les règles Firestore : conserver les données exige un fallback auteur ou un backfill avant un verrouillage strict.
+- [Claim role compatibility](claim-role-compatibility.md) — une revendication sans requestedRole doit rester une demande de prêtre ; les admins paroissiaux ne peuvent jamais valider ce rôle.
+- [Firebase Auth email configuration](firebase-auth-email-configuration.md) — sur ce projet Firebase Auth standard, les modèles d’e-mail et callbackUri doivent être configurés dans Firebase Console, l’API renvoie EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED.
+- [Expo preview versus production](expo-preview-vs-production.md) — le preview Expo utilise un domaine *.expo.picard.replit.dev ; l’URL publique stable doit venir de getDeploymentInfo().primaryUrl.
+- [Mutual aid private contact data](mutual-aid-private-data.md) — les publications publiques v2 excluent téléphone et nom de formulaire ; les coordonnées sont dans une sous-collection privée.
+- [Firestore nested comments](firestore-nested-comments.md) — les sous-collections `comments` doivent avoir leurs propres règles d’accès ; les droits du document parent ne se propagent pas automatiquement.
+- [Firestore participant query rules](firestore-participant-query-rules.md) — une requête `array-contains` doit être compatible avec la règle de lecture, sans contrainte indépendante qui bloque toute la liste.
+- [Android release build quota](android-release-build-quota.md) — les transformations Gradle échouées s’accumulent ; nettoyer ce cache reconstruisible et conserver uniquement les composants NDK nécessaires permet de finir l’AAB.
+- [iOS AAB download](ios-aab-download.md) — Safari iPhone peut refuser un AAB direct ; servir les mêmes octets sous une vraie URL et un nom `.zip`, puis décompresser dans Fichiers.
+- [Publication media compatibility](publication-media-compatibility.md) — les publications utilisent `imageUrls` (0–2) avec lecture legacy `imageUrl`, sans fallback de couverture paroissiale.
+- [Group membership source of truth](group-membership-source-of-truth.md) — suivre chaque document `groupId_uid` directement ; une requête globale peut remplacer une adhésion confirmée par un état périmé.
+- [Group responsibility permissions](group-responsibility-permissions.md) — `leaderUid` est le responsable canonique ; sa désignation est réservée aux rôles paroissiaux autorisés, pas au responsable lui-même.
+- [Expo i18n Babel transform](expo-i18n-babel-transform.md) — les nœuds AST générés doivent rester compatibles avec Worklets et Metro ; préférer les expressions `translateStatic` directes aux identifiants JSX injectés.
+- [Firebase emulator runtime](firebase-emulator-runtime.md) — les tests locaux Auth/Firestore exigent Java 21+ et des hôtes IPv4 explicites si `::1` est indisponible.
+- [Expo AsyncStorage browser tests](expo-asyncstorage-browser-tests.md) — vider localStorage ne réinitialise pas AsyncStorage Web ; utiliser un profil Chromium neuf pour tester une locale persistée.

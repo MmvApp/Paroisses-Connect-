@@ -1,0 +1,88 @@
+{
+  "expo": {
+    "name": "Paroisse Connect",
+    "slug": "paroisse-connect",
+    "owner": "mmvplume99",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "paroisse-connect",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#8B1A1A"
+    },
+    "ios": {
+      "bundleIdentifier": "com.paroisseconnect.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Paroisse Connect souhaite accéder à vos photos pour votre photo de profil et les publications.",
+        "NSCameraUsageDescription": "Paroisse Connect souhaite utiliser votre appareil photo pour votre photo de profil.",
+        "NSLocationWhenInUseUsageDescription": "Paroisse Connect utilise votre position pour afficher les paroisses à proximité."
+      }
+    },
+    "android": {
+      "package": "com.paroisseconnect.app",
+      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#8B1A1A"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-splash-screen",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Paroisse Connect souhaite accéder à vos photos pour votre photo de profil.",
+          "cameraPermission": "Paroisse Connect souhaite utiliser votre appareil photo pour votre photo de profil."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Paroisse Connect utilise votre position pour afficher les paroisses à proximité."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#C9A24A",
+          "androidMode": "default",
+          "androidCollapsedTitle": "Paroisse Connect"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dea9c92e-beec-4ea0-99b7-90df33863875"
+      }
+    }
+  }
+}

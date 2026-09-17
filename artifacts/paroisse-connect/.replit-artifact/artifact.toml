@@ -1,0 +1,26 @@
+kind = "mobile"
+previewPath = "/"
+title = "Paroisse Connect"
+version = "1.0.0"
+id = "artifacts/paroisse-connect"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+name = "expo"
+paths = [ "/" ]
+localPort = 24272
+
+[services.development]
+run = "pnpm --filter @workspace/paroisse-connect run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/paroisse-connect", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/paroisse-connect", "run", "serve" ]
+
+[services.env]
+PORT = "24272"
+BASE_PATH = "/"
